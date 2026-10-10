@@ -1,5 +1,6 @@
 -- TKM İdari İşler — veritabanı şeması
--- Supabase Dashboard > SQL Editor içinde bir kez çalıştırın.
+-- YENİ kurulum içindir: Supabase Dashboard > SQL Editor içinde bir kez çalıştırın.
+-- Mevcut bir veritabanını güncellemek için supabase/migrations klasörüne bakın.
 
 -- ---------------------------------------------------------------------------
 -- Tablolar
@@ -16,11 +17,12 @@ create table public.vehicles (
   color text check (char_length(color) <= 30),
   mileage integer check (mileage between 0 and 9999999),
   fuel_type text check (fuel_type in ('Benzin', 'Dizel', 'LPG', 'Benzin + LPG', 'Hibrit', 'Elektrik')),
-  status text not null default 'Aktif' check (status in ('Aktif', 'Pasif')),
+  status text not null default 'Aktif' check (status in ('Aktif', 'Pasif', 'Havuz')),
   chassis_no text unique check (chassis_no ~ '^[A-Z0-9]{6,17}$'),
   inspection_expiry date,
   traffic_insurance_expiry date,
   casco_expiry date,
+  assignment_type text check (assignment_type in ('Göreve', 'Şahsa')),
   assigned_to text check (char_length(assigned_to) <= 80),
   department text check (char_length(department) <= 80),
   job_title text check (char_length(job_title) <= 80),
@@ -32,6 +34,7 @@ create table public.vehicles (
 create table public.phone_lines (
   id uuid primary key default gen_random_uuid(),
   phone_number text not null unique check (phone_number ~ '^0[0-9]{10}$'),
+  number_type text check (number_type in ('Şirket', 'Şahsi')),
   operator text check (operator in ('Turkcell', 'Vodafone', 'Türk Telekom', 'Diğer')),
   plan text check (char_length(plan) <= 80),
   quota text check (char_length(quota) <= 60),
@@ -40,6 +43,7 @@ create table public.phone_lines (
   assigned_to text check (char_length(assigned_to) <= 80),
   department text check (char_length(department) <= 80),
   job_title text check (char_length(job_title) <= 80),
+  device_type text check (device_type in ('Telefon', 'Tablet')),
   imei1 text check (imei1 ~ '^[0-9]{15}$'),
   imei2 text check (imei2 ~ '^[0-9]{15}$'),
   device_brand text check (char_length(device_brand) <= 50),
@@ -50,6 +54,21 @@ create table public.phone_lines (
   activation_date date,
   contract_end date,
   device_handover_date date,
+  notes text check (char_length(notes) <= 1000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.generators (
+  id uuid primary key default gen_random_uuid(),
+  serial_no text not null unique check (serial_no ~ '^[A-Z0-9./-]{2,40}$'),
+  brand text check (char_length(brand) <= 50),
+  fuel_kind text check (char_length(fuel_kind) <= 50),
+  fuel_limit numeric(10, 2) check (fuel_limit between 0 and 9999999),
+  store text check (char_length(store) <= 80),
+  province text check (char_length(province) <= 40),
+  district text check (char_length(district) <= 40),
+  status text not null default 'Aktif' check (status in ('Aktif', 'Pasif')),
   notes text check (char_length(notes) <= 1000),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -123,12 +142,20 @@ create trigger phone_lines_set_updated_at
   before update on public.phone_lines
   for each row execute function public.set_updated_at();
 
+create trigger generators_set_updated_at
+  before update on public.generators
+  for each row execute function public.set_updated_at();
+
 create trigger vehicles_audit
   after insert or update or delete on public.vehicles
   for each row execute function public.write_audit_log();
 
 create trigger phone_lines_audit
   after insert or update or delete on public.phone_lines
+  for each row execute function public.write_audit_log();
+
+create trigger generators_audit
+  after insert or update or delete on public.generators
   for each row execute function public.write_audit_log();
 
 -- ---------------------------------------------------------------------------
@@ -138,11 +165,12 @@ create trigger phone_lines_audit
 
 alter table public.vehicles enable row level security;
 alter table public.phone_lines enable row level security;
+alter table public.generators enable row level security;
 alter table public.audit_log enable row level security;
 
-revoke all on public.vehicles, public.phone_lines, public.audit_log from anon, authenticated;
+revoke all on public.vehicles, public.phone_lines, public.generators, public.audit_log from anon, authenticated;
 
-grant select, insert, update, delete on public.vehicles, public.phone_lines to authenticated;
+grant select, insert, update, delete on public.vehicles, public.phone_lines, public.generators to authenticated;
 grant select on public.audit_log to authenticated;
 
 create policy "Giris yapan kullanicilar araclari yonetir"
@@ -151,6 +179,10 @@ create policy "Giris yapan kullanicilar araclari yonetir"
 
 create policy "Giris yapan kullanicilar hatlari yonetir"
   on public.phone_lines for all to authenticated
+  using (true) with check (true);
+
+create policy "Giris yapan kullanicilar jeneratorleri yonetir"
+  on public.generators for all to authenticated
   using (true) with check (true);
 
 create policy "Giris yapan kullanicilar gecmisi gorur"

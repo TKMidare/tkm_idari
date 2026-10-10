@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { entities, formatValue, type Entity, type Row } from '../lib/fields'
+import { PASSIVE, entities, formatValue, type Entity, type Field, type Row } from '../lib/fields'
 import { EXPIRY_WARNING_DAYS, daysUntil, formatDate, isoDateFromToday } from '../lib/format'
 import { describeError } from '../lib/records'
 import { supabase } from '../lib/supabase'
@@ -17,31 +17,22 @@ interface Alert {
 
 interface Summary {
   entity: Entity
-  active: number
-  passive: number
-  alerts: Alert[]
+  counts: { status: string; count: number }[]
+  /** Bitiş tarihi alanı olmayan kayıt türlerinde null. */
+  alerts: Alert[] | null
 }
 
-async function loadSummary(entity: Entity): Promise<Summary> {
+async function loadAlerts(entity: Entity, dated: Field[]): Promise<Alert[]> {
   const limit = isoDateFromToday(EXPIRY_WARNING_DAYS)
-  const dated = entity.fields.filter((field) => field.expiry)
-  const count = (status: string) =>
-    supabase.from(entity.table).select('id', { count: 'exact', head: true }).eq('status', status)
-
-  const [active, passive, due] = await Promise.all([
-    count('Aktif'),
-    count('Pasif'),
-    supabase
-      .from(entity.table)
-      .select('*')
-      .eq('status', 'Aktif')
-      .or(dated.map((field) => `${field.key}.lte.${limit}`).join(','))
-      .limit(MAX_ALERT_ROWS),
-  ])
-  const error = active.error ?? passive.error ?? due.error
+  const { data, error } = await supabase
+    .from(entity.table)
+    .select('*')
+    .neq('status', PASSIVE)
+    .or(dated.map((field) => `${field.key}.lte.${limit}`).join(','))
+    .limit(MAX_ALERT_ROWS)
   if (error) throw new Error(describeError(error))
 
-  const alerts = (due.data as Row[]).flatMap((row) =>
+  const alerts = (data as Row[]).flatMap((row) =>
     dated
       .filter((field) => row[field.key] && String(row[field.key]) <= limit)
       .map((field) => ({
@@ -52,8 +43,27 @@ async function loadSummary(entity: Entity): Promise<Summary> {
         date: String(row[field.key]),
       })),
   )
-  alerts.sort((a, b) => a.date.localeCompare(b.date))
-  return { entity, active: active.count ?? 0, passive: passive.count ?? 0, alerts }
+  return alerts.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+async function loadSummary(entity: Entity): Promise<Summary> {
+  const statuses = entity.fields.find((field) => field.key === 'status')!.options!
+  const dated = entity.fields.filter((field) => field.expiry)
+
+  const [counts, alerts] = await Promise.all([
+    Promise.all(
+      statuses.map(async (status) => {
+        const { count, error } = await supabase
+          .from(entity.table)
+          .select('id', { count: 'exact', head: true })
+          .eq('status', status)
+        if (error) throw new Error(describeError(error))
+        return { status, count: count ?? 0 }
+      }),
+    ),
+    dated.length > 0 ? loadAlerts(entity, dated) : null,
+  ])
+  return { entity, counts, alerts }
 }
 
 function DueBadge({ date }: { date: string }) {
@@ -65,6 +75,7 @@ function DueBadge({ date }: { date: string }) {
 export function Dashboard() {
   const [summaries, setSummaries] = useState<Summary[] | null>(null)
   const [failure, setFailure] = useState('')
+  const allAlerts = summaries?.flatMap((summary) => summary.alerts ?? []) ?? []
 
   useEffect(() => {
     Promise.all(entities.map(loadSummary))
@@ -77,7 +88,7 @@ export function Dashboard() {
       <header className="page-header">
         <div>
           <h1>Özet</h1>
-          <p className="muted">Filo ve hatların güncel durumu</p>
+          <p className="muted">Araç, hat ve jeneratörlerin güncel durumu</p>
         </div>
       </header>
 
@@ -87,32 +98,34 @@ export function Dashboard() {
       {summaries && (
         <>
           <div className="stats">
-            {summaries.map(({ entity, active, passive }) => (
+            {summaries.map(({ entity, counts }) => (
               <Link key={entity.table} to={entity.path} className="stat">
                 <span className="stat-label">{entity.title}</span>
-                <span className="stat-value">{(active + passive).toLocaleString('tr-TR')}</span>
+                <span className="stat-value">
+                  {counts.reduce((total, { count }) => total + count, 0).toLocaleString('tr-TR')}
+                </span>
                 <span className="muted">
-                  {active.toLocaleString('tr-TR')} aktif · {passive.toLocaleString('tr-TR')} pasif
+                  {counts.map(({ status, count }) => `${count.toLocaleString('tr-TR')} ${status.toLocaleLowerCase('tr')}`).join(' · ')}
                 </span>
               </Link>
             ))}
             <div className="stat">
               <span className="stat-label">Süresi Geçenler</span>
               <span className="stat-value text-danger">
-                {summaries.flatMap((summary) => summary.alerts).filter((alert) => daysUntil(alert.date) < 0).length}
+                {allAlerts.filter((alert) => daysUntil(alert.date) < 0).length}
               </span>
-              <span className="muted">Aktif kayıtlarda</span>
+              <span className="muted">Pasif olmayan kayıtlarda</span>
             </div>
             <div className="stat">
               <span className="stat-label">{EXPIRY_WARNING_DAYS} Gün İçinde Bitecek</span>
               <span className="stat-value text-warning">
-                {summaries.flatMap((summary) => summary.alerts).filter((alert) => daysUntil(alert.date) >= 0).length}
+                {allAlerts.filter((alert) => daysUntil(alert.date) >= 0).length}
               </span>
-              <span className="muted">Aktif kayıtlarda</span>
+              <span className="muted">Pasif olmayan kayıtlarda</span>
             </div>
           </div>
 
-          {summaries.map(({ entity, alerts }) => (
+          {summaries.map(({ entity, alerts }) => alerts && (
             <section key={entity.table} className="table-card">
               <h2>{entity.title} — yaklaşan ve geçmiş tarihler</h2>
               {alerts.length === 0 ? (

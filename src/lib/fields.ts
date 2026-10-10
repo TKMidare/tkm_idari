@@ -27,7 +27,7 @@ export interface Field {
 }
 
 export interface Entity {
-  table: 'vehicles' | 'phone_lines'
+  table: 'vehicles' | 'phone_lines' | 'generators'
   path: string
   title: string
   singular: string
@@ -39,7 +39,8 @@ export interface Entity {
   compactSearchColumns: string[]
 }
 
-export const STATUS_OPTIONS = ['Aktif', 'Pasif'] as const
+/** Bu durumdaki kayıtlar kullanım dışıdır; bitiş tarihi uyarısı verilmez. */
+export const PASSIVE = 'Pasif'
 
 const compactUpper = (text: string) => text.replace(/\s+/g, '').toUpperCase()
 const digitsOnly = (text: string) => text.replace(/\D/g, '')
@@ -55,7 +56,8 @@ function normalizePhone(text: string): string {
   return digits.length === 10 ? `0${digits}` : digits
 }
 
-const status: Field = { key: 'status', label: 'Durum', type: 'select', options: STATUS_OPTIONS, required: true, defaultValue: 'Aktif' }
+const status: Field = { key: 'status', label: 'Durum', type: 'select', options: ['Aktif', PASSIVE], required: true, defaultValue: 'Aktif' }
+const notes: Field = { key: 'notes', label: 'Not', type: 'textarea', maxLength: 1000 }
 const assignment: Field[] = [
   { key: 'assigned_to', label: 'Kullanan Personel', type: 'text', maxLength: 80 },
   { key: 'department', label: 'Birim', type: 'text', maxLength: 80 },
@@ -83,7 +85,8 @@ export const vehicles: Entity = {
     { key: 'color', label: 'Renk', type: 'text', maxLength: 30 },
     { key: 'mileage', label: 'Kilometre', type: 'int', min: 0, max: 9_999_999, format: 'grouped' },
     { key: 'fuel_type', label: 'Yakıt Türü', type: 'select', options: ['Benzin', 'Dizel', 'LPG', 'Benzin + LPG', 'Hibrit', 'Elektrik'] },
-    status,
+    // Havuz: belirli bir kişiye veya göreve bağlı olmayan, ortak kullanılan araç.
+    { ...status, options: ['Aktif', PASSIVE, 'Havuz'] },
     {
       key: 'chassis_no', label: 'Şasi No', type: 'text',
       normalize: compactUpper, pattern: /^[A-Z0-9]{6,17}$/,
@@ -92,8 +95,9 @@ export const vehicles: Entity = {
     { key: 'inspection_expiry', label: 'Muayene Bitiş', type: 'date', expiry: true },
     { key: 'traffic_insurance_expiry', label: 'Trafik Sigortası Bitiş', type: 'date', expiry: true },
     { key: 'casco_expiry', label: 'Kasko Bitiş', type: 'date', expiry: true },
+    { key: 'assignment_type', label: 'Tahsis Türü', type: 'select', options: ['Göreve', 'Şahsa'] },
     ...assignment,
-    { key: 'notes', label: 'Not', type: 'textarea', maxLength: 1000 },
+    notes,
   ],
 }
 
@@ -111,12 +115,14 @@ export const phoneLines: Entity = {
       normalize: normalizePhone, pattern: /^0\d{10}$/,
       hint: 'Telefon numarası alan koduyla birlikte 10 haneli olmalıdır (örn. 0532 123 45 67).',
     },
+    { key: 'number_type', label: 'Numara Türü', type: 'select', options: ['Şirket', 'Şahsi'] },
     { key: 'operator', label: 'Operatör', type: 'select', options: ['Turkcell', 'Vodafone', 'Türk Telekom', 'Diğer'] },
     { key: 'plan', label: 'Tarife / Paket', type: 'text', maxLength: 80 },
     { key: 'quota', label: 'Kota', type: 'text', maxLength: 60, hidden: true },
     { key: 'monthly_fee', label: 'Aylık Ücret', type: 'decimal', min: 0, max: 999_999, format: 'money' },
     status,
     ...assignment,
+    { key: 'device_type', label: 'Cihaz Türü', type: 'select', options: ['Telefon', 'Tablet'] },
     { key: 'imei1', label: 'IMEI 1', type: 'text', ...imeiRule },
     { key: 'imei2', label: 'IMEI 2', type: 'text', hidden: true, ...imeiRule },
     { key: 'device_brand', label: 'Cihaz Marka', type: 'text', maxLength: 50 },
@@ -130,11 +136,36 @@ export const phoneLines: Entity = {
     { key: 'activation_date', label: 'Hat Açılış Tarihi', type: 'date', hidden: true },
     { key: 'contract_end', label: 'Taahhüt Bitiş', type: 'date', expiry: true },
     { key: 'device_handover_date', label: 'Cihaz Teslim Tarihi', type: 'date', hidden: true },
-    { key: 'notes', label: 'Not', type: 'textarea', maxLength: 1000, hidden: true },
+    { ...notes, hidden: true },
   ],
 }
 
-export const entities = [vehicles, phoneLines]
+export const generators: Entity = {
+  table: 'generators',
+  path: '/jeneratorler',
+  title: 'Jeneratörler',
+  singular: 'Jeneratör',
+  keyField: 'serial_no',
+  searchColumns: ['brand', 'fuel_kind', 'store', 'province', 'district'],
+  compactSearchColumns: ['serial_no'],
+  fields: [
+    {
+      key: 'serial_no', label: 'Seri No', type: 'text', required: true,
+      normalize: compactUpper, pattern: /^[A-Z0-9./-]{2,40}$/,
+      hint: 'Seri numarası 2–40 karakter olmalı; yalnızca İngilizce harf, rakam ve . / - içerebilir.',
+    },
+    { key: 'brand', label: 'Marka', type: 'text', maxLength: 50 },
+    { key: 'fuel_kind', label: 'Mazot Cinsi', type: 'text', maxLength: 50 },
+    { key: 'fuel_limit', label: 'Limit', type: 'decimal', min: 0, max: 9_999_999, format: 'grouped' },
+    { key: 'store', label: 'Mağaza', type: 'text', maxLength: 80 },
+    { key: 'province', label: 'İl', type: 'text', maxLength: 40 },
+    { key: 'district', label: 'İlçe', type: 'text', maxLength: 40 },
+    status,
+    notes,
+  ],
+}
+
+export const entities = [vehicles, phoneLines, generators]
 
 function parseValue(field: Field, raw: unknown): { value: Value; error?: string } {
   const fail = (error: string) => ({ value: null, error })

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { downloadExcel } from '../lib/excel'
-import { STATUS_OPTIONS, formatValue, type Entity, type Field, type Row } from '../lib/fields'
+import { PASSIVE, formatValue, type Entity, type Field, type Row } from '../lib/fields'
 import { EXPIRY_WARNING_DAYS, daysUntil } from '../lib/format'
 import { PAGE_SIZE, deleteRecord, fetchAll, fetchPage, type Sort } from '../lib/records'
 import { ImportDialog } from './ImportDialog'
@@ -12,7 +12,7 @@ type Dialog = { kind: 'form'; row: Row | null } | { kind: 'delete'; row: Row } |
 
 function cellClass(field: Field, row: Row): string | undefined {
   const value = row[field.key]
-  if (!field.expiry || !value || row.status !== 'Aktif') return undefined
+  if (!field.expiry || !value || row.status === PASSIVE) return undefined
   const days = daysUntil(String(value))
   return days < 0 ? 'cell-expired' : days <= EXPIRY_WARNING_DAYS ? 'cell-expiring' : undefined
 }
@@ -31,6 +31,7 @@ export function RecordsPage({ entity }: { entity: Entity }) {
   const [busy, setBusy] = useState(false)
 
   const columns = entity.fields.filter((field) => !field.hidden)
+  const statuses = entity.fields.find((field) => field.key === 'status')!.options!
   const pageCount = Math.max(1, Math.ceil((data?.total ?? 0) / PAGE_SIZE))
 
   useEffect(() => {
@@ -124,7 +125,7 @@ export function RecordsPage({ entity }: { entity: Entity }) {
           }}
         >
           <option value="">Tüm durumlar</option>
-          {STATUS_OPTIONS.map((option) => (
+          {statuses.map((option) => (
             <option key={option}>{option}</option>
           ))}
         </select>
@@ -167,7 +168,9 @@ export function RecordsPage({ entity }: { entity: Entity }) {
                   {columns.map((field) => (
                     <td key={field.key} className={cellClass(field, row)}>
                       {field.key === 'status' ? (
-                        <span className={row.status === 'Aktif' ? 'badge badge-ok' : 'badge'}>{row.status}</span>
+                        <span className={row.status === PASSIVE ? 'badge' : row.status === 'Aktif' ? 'badge badge-ok' : 'badge badge-pool'}>
+                          {row.status}
+                        </span>
                       ) : field.key === entity.keyField ? (
                         <button type="button" className="link-button" onClick={() => setDialog({ kind: 'form', row })}>
                           {formatValue(field, row[field.key])}

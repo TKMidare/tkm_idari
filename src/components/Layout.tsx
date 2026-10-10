@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { signOut, useAuth } from '../auth'
-import { phoneLines, vehicles } from '../lib/fields'
+import { entities } from '../lib/fields'
 import { supabase } from '../lib/supabase'
 import { Modal } from './Modal'
 
@@ -9,8 +9,7 @@ const MIN_PASSWORD_LENGTH = 10
 
 const links = [
   { to: '/', label: 'Özet' },
-  { to: vehicles.path, label: vehicles.title },
-  { to: phoneLines.path, label: phoneLines.title },
+  ...entities.map((entity) => ({ to: entity.path, label: entity.title })),
   { to: '/gecmis', label: 'Değişiklik Geçmişi' },
 ]
 

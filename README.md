@@ -1,12 +1,12 @@
 # TKM İdari İşler
 
-Araç filosu ve telefon hatlarını yönetmek için giriş korumalı web uygulaması.
+Araç filosu, telefon hatları ve jeneratörleri yönetmek için giriş korumalı web uygulaması.
 Arayüz: React + Vite. Veritabanı ve kimlik doğrulama: Supabase. Yayın: GitHub Pages.
 
 ## Özellikler
 
 - E-posta + şifre ile giriş; 30 dakika işlem yapılmazsa oturum kapanır
-- Araçlar ve Telefon Hatları: ekleme, düzenleme, silme, arama, sıralama, durum filtresi
+- Araçlar, Telefon Hatları ve Jeneratörler: ekleme, düzenleme, silme, arama, sıralama, durum filtresi
 - Excel'den toplu aktarma (şablonlu, satır satır hata raporu) ve Excel'e indirme
 - Özet sayfası: süresi geçen / 30 gün içinde bitecek muayene, sigorta, kasko ve taahhütler
 - Değişiklik Geçmişi: kim, neyi, ne zaman ekledi / değiştirdi / sildi
@@ -42,6 +42,14 @@ npm run dev
 3. **Settings → Pages → Source**: **GitHub Actions** seçin.
 4. `main` dalına yapılan her gönderimde site otomatik derlenip yayınlanır
    ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+
+## Veritabanı güncellemeleri
+
+Yeni alan veya tablo gerektiren sürümlerde [`supabase/migrations`](supabase/migrations)
+klasörüne numaralı bir betik eklenir. Mevcut veritabanında, henüz çalıştırmadığınız
+betikleri sırayla SQL Editor'de çalıştırın; **önce betiği çalıştırın, sonra yeni sürümü yayınlayın.**
+Betikler yalnızca ekleme yapar, mevcut kayıtları silmez veya değiştirmez.
+(`schema.sql` yalnızca sıfırdan kurulum içindir; mevcut veritabanında çalıştırmayın.)
 
 ## Güvenlik
 

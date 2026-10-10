@@ -496,6 +496,12 @@ tbody tr:hover .col-actions {
   background: var(--green-100);
 }
 
+.badge-pool {
+  color: var(--green-700);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--green-600);
+}
+
 .badge-warning {
   color: var(--warning);
   background: var(--warning-bg);

@@ -19,7 +19,7 @@ export interface Sort {
 export function describeError(error: PostgrestError): string {
   switch (error.code) {
     case '23505':
-      return 'Bu bilgilerle kayıtlı başka bir kayıt var (plaka, şasi no ve telefon numarası benzersiz olmalıdır).'
+      return 'Bu bilgilerle kayıtlı başka bir kayıt var (plaka, şasi no, telefon numarası ve seri no benzersiz olmalıdır).'
     case '23514':
     case '22001':
       return 'Girilen değerlerden biri geçersiz. Lütfen alanları kontrol edin.'
