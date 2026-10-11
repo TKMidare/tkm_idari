@@ -35,6 +35,9 @@ export async function downloadExcel(entity: Entity, rows: Values[], fileName: st
   setTimeout(() => URL.revokeObjectURL(link.href), 1000)
 }
 
+/** Yalnızca sütun başlıklarını içeren boş dosya; doldurulup "Excel'den Aktar" ile yüklenir. */
+export const downloadTemplate = (entity: Entity) => downloadExcel(entity, [], `${entity.table}-sablon`)
+
 /**
  * .xlsx dosyasını okuyup satırları doğrular. İlk satır başlık olmalı ve
  * sütun adları formdaki alan adlarıyla aynı olmalıdır; tanınmayan sütunlar yok sayılır.

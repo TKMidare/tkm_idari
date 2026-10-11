@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from 'react'
-import { downloadExcel, readExcel, type ImportResult } from '../lib/excel'
+import { downloadTemplate, readExcel, type ImportResult } from '../lib/excel'
 import type { Entity } from '../lib/fields'
 import { upsertRecords } from '../lib/records'
 import { Modal } from './Modal'
@@ -54,7 +54,7 @@ export function ImportDialog({ entity, onImported, onClose }: Props) {
           zaten bulunan kayıtlar güncellenir, diğerleri yeni kayıt olarak eklenir.
         </p>
         <p>
-          <button type="button" className="link-button" onClick={() => void downloadExcel(entity, [], `${entity.table}-sablon`)}>
+          <button type="button" className="link-button" onClick={() => void downloadTemplate(entity)}>
             Boş şablonu indir
           </button>
         </p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { downloadExcel } from '../lib/excel'
+import { downloadExcel, downloadTemplate } from '../lib/excel'
 import { PASSIVE, formatValue, type Entity, type Field, type Row } from '../lib/fields'
 import { EXPIRY_WARNING_DAYS, daysUntil } from '../lib/format'
 import { PAGE_SIZE, deleteRecord, fetchAll, fetchPage, type Sort } from '../lib/records'
@@ -102,6 +102,9 @@ export function RecordsPage({ entity }: { entity: Entity }) {
           </button>
           <button type="button" className="button" onClick={exportAll} disabled={busy || !data?.total}>
             Excel'e İndir
+          </button>
+          <button type="button" className="button" onClick={() => run(() => downloadTemplate(entity))} disabled={busy}>
+            Şablon İndir
           </button>
           <button type="button" className="button button-primary" onClick={() => setDialog({ kind: 'form', row: null })}>
             + {entity.singular} Ekle
