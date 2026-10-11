@@ -8,7 +8,7 @@ Arayüz: React + Vite. Veritabanı ve kimlik doğrulama: Supabase. Yayın: GitHu
 - E-posta + şifre ile giriş; 30 dakika işlem yapılmazsa oturum kapanır
 - Araçlar, Telefon Hatları ve Jeneratörler: ekleme, düzenleme, silme, arama, sıralama, durum filtresi
 - Excel'den toplu aktarma (şablonlu, satır satır hata raporu) ve Excel'e indirme
-- Özet sayfası: süresi geçen / 30 gün içinde bitecek muayene, sigorta, kasko ve taahhütler
+- Özet sayfası: süresi geçen / 30 gün içinde bitecek muayene, sigorta, kasko, kiralama ve taahhütler
 - Değişiklik Geçmişi: kim, neyi, ne zaman ekledi / değiştirdi / sildi
 - Kullanıcılar (yalnızca yöneticiler): hesap açma, silme ve yöneticilik verme
 

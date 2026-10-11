@@ -22,6 +22,8 @@ export interface Field {
   format?: 'grouped' | 'money' | 'phone'
   /** Bitiş tarihi: yaklaştığında veya geçtiğinde uyarı verilir. */
   expiry?: boolean
+  /** Bu tarih, adı verilen diğer tarih alanından önce olamaz. */
+  notBefore?: string
   /** Listede gösterilmez, yalnızca formda ve Excel'de yer alır. */
   hidden?: boolean
   /** Telefon görünümündeki özet kartta gösterilir; diğer alanlar kayıt açılınca görünür. */
@@ -97,6 +99,8 @@ export const vehicles: Entity = {
     { key: 'inspection_expiry', label: 'Muayene Bitiş', type: 'date', expiry: true },
     { key: 'traffic_insurance_expiry', label: 'Trafik Sigortası Bitiş', type: 'date', expiry: true },
     { key: 'casco_expiry', label: 'Kasko Bitiş', type: 'date', expiry: true },
+    { key: 'rental_start', label: 'Kiralama Başlangıç', type: 'date' },
+    { key: 'rental_end', label: 'Kiralama Bitiş', type: 'date', expiry: true, notBefore: 'rental_start' },
     { key: 'assignment_type', label: 'Tahsis Türü', type: 'select', options: ['Göreve', 'Şahsa'] },
     ...assignment,
     notes,
@@ -219,6 +223,13 @@ export function validateRecord(fields: Field[], source: Record<string, unknown>)
     const { value, error } = parseValue(field, source[field.key])
     values[field.key] = value
     if (error) errors[field.key] = error
+  }
+  for (const field of fields) {
+    const earliest = fields.find((other) => other.key === field.notBefore)
+    const [value, limit] = [values[field.key], earliest && values[earliest.key]]
+    if (earliest && value && limit && value < limit) {
+      errors[field.key] = `${field.label}, ${earliest.label} tarihinden önce olamaz.`
+    }
   }
   return { values, errors }
 }
