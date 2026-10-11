@@ -14,6 +14,12 @@ const AuthContext = createContext<AuthState>({ session: null, loading: true })
 
 export const useAuth = () => useContext(AuthContext)
 
+/**
+ * Yalnızca menüyü ve sayfayı göstermek içindir; yetkinin kendisi sunucuda denetlenir.
+ * Yetki değişikliği, kişi yeniden giriş yaptığında (veya oturumu yenilendiğinde) görünür.
+ */
+export const useIsAdmin = () => useAuth().session?.user.app_metadata.role === 'admin'
+
 export function markActivity() {
   localStorage.setItem(ACTIVITY_KEY, String(Date.now()))
 }

@@ -3,6 +3,10 @@ import { entities, formatValue, type Values } from '../lib/fields'
 import { formatDateTime } from '../lib/format'
 import { PAGE_SIZE, describeError } from '../lib/records'
 import { supabase } from '../lib/supabase'
+import { ROLE_LABELS, type Role } from '../lib/users'
+
+/** Kullanıcı yönetimi işlevinin (Edge Function) geçmişe yazdığı kayıt türü. */
+const USERS = 'users'
 
 interface Entry {
   id: number
@@ -21,6 +25,17 @@ const ACTIONS = {
 }
 
 function Changes({ entry }: { entry: Entry }) {
+  if (entry.table_name === USERS && entry.action === 'UPDATE') {
+    const label = (data: Values | null) => ROLE_LABELS[data?.role as Role]
+    return (
+      <ul className="changes">
+        <li>
+          <strong>Yetki:</strong> {label(entry.old_data)} → {label(entry.new_data)}
+        </li>
+      </ul>
+    )
+  }
+
   const entity = entities.find((candidate) => candidate.table === entry.table_name)
   if (!entity || entry.action !== 'UPDATE') return null
 
@@ -87,6 +102,7 @@ export function History() {
               {entity.title}
             </option>
           ))}
+          <option value={USERS}>Kullanıcılar</option>
         </select>
       </div>
 
@@ -113,8 +129,8 @@ export function History() {
                     <td>{formatDateTime(entry.created_at)}</td>
                     <td data-label="Kullanıcı">{entry.user_email ?? '—'}</td>
                     <td data-label="Kayıt">
-                      {entity && record ? formatValue(entity.fields[0], record[entity.keyField]) : '—'}
-                      <span className="muted"> · {entity?.singular ?? entry.table_name}</span>
+                      {entity && record ? formatValue(entity.fields[0], record[entity.keyField]) : (record?.email ?? '—')}
+                      <span className="muted"> · {entity?.singular ?? (entry.table_name === USERS ? 'Kullanıcı' : entry.table_name)}</span>
                     </td>
                     <td className="cell-status">
                       <span className={ACTIONS[entry.action].badge}>{ACTIONS[entry.action].label}</span>

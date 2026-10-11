@@ -172,19 +172,47 @@ revoke all on public.vehicles, public.phone_lines, public.generators, public.aud
 
 grant select, insert, update, delete on public.vehicles, public.phone_lines, public.generators to authenticated;
 grant select on public.audit_log to authenticated;
+-- Kullanıcı yönetimi işlevi (Edge Function) hesap işlemlerini geçmişe yazar.
+grant insert on public.audit_log to service_role;
+
+-- Hesabı silinmiş bir kullanıcının elindeki oturum, süresi dolana kadar geçerli
+-- kalırdı. Bu işlev hesabın hâlâ var olduğunu her istekte denetler.
+create function public.is_active_user()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (select 1 from auth.users where id = (select auth.uid()));
+$$;
+
+revoke execute on function public.is_active_user() from public, anon;
+grant execute on function public.is_active_user() to authenticated;
 
 create policy "Giris yapan kullanicilar araclari yonetir"
   on public.vehicles for all to authenticated
-  using (true) with check (true);
+  using ((select public.is_active_user())) with check ((select public.is_active_user()));
 
 create policy "Giris yapan kullanicilar hatlari yonetir"
   on public.phone_lines for all to authenticated
-  using (true) with check (true);
+  using ((select public.is_active_user())) with check ((select public.is_active_user()));
 
 create policy "Giris yapan kullanicilar jeneratorleri yonetir"
   on public.generators for all to authenticated
-  using (true) with check (true);
+  using ((select public.is_active_user())) with check ((select public.is_active_user()));
 
 create policy "Giris yapan kullanicilar gecmisi gorur"
   on public.audit_log for select to authenticated
-  using (true);
+  using ((select public.is_active_user()));
+
+-- ---------------------------------------------------------------------------
+-- İlk yönetici
+-- Kullanıcıyı Authentication > Users altında oluşturduktan sonra, aşağıdaki
+-- satırı kendi e-postanızla ayrıca çalıştırın. Sonraki yöneticiler sitedeki
+-- Kullanıcılar sayfasından atanır.
+-- ---------------------------------------------------------------------------
+--
+-- update auth.users
+-- set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
+-- where lower(email) = lower('YONETICI-EPOSTASI');

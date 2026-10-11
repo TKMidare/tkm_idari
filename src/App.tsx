@@ -6,6 +6,7 @@ import { entities } from './lib/fields'
 import { Dashboard } from './pages/Dashboard'
 import { History } from './pages/History'
 import { Login } from './pages/Login'
+import { Users } from './pages/Users'
 
 function Protected() {
   const { session, loading } = useAuth()
@@ -25,6 +26,7 @@ export function App() {
             <Route key={entity.table} path={entity.path} element={<RecordsPage key={entity.table} entity={entity} />} />
           ))}
           <Route path="/gecmis" element={<History />} />
+          <Route path="/kullanicilar" element={<Users />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

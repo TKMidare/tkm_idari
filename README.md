@@ -10,6 +10,7 @@ Arayüz: React + Vite. Veritabanı ve kimlik doğrulama: Supabase. Yayın: GitHu
 - Excel'den toplu aktarma (şablonlu, satır satır hata raporu) ve Excel'e indirme
 - Özet sayfası: süresi geçen / 30 gün içinde bitecek muayene, sigorta, kasko ve taahhütler
 - Değişiklik Geçmişi: kim, neyi, ne zaman ekledi / değiştirdi / sildi
+- Kullanıcılar (yalnızca yöneticiler): hesap açma, silme ve yöneticilik verme
 
 ## Kurulum
 
@@ -20,11 +21,15 @@ Arayüz: React + Vite. Veritabanı ve kimlik doğrulama: Supabase. Yayın: GitHu
 3. **Authentication → Sign In / Providers**: **Allow new users to sign up** seçeneğini **kapatın**.
    (Sitede kayıt sayfası yoktur; bu ayar API üzerinden hesap açılmasını da engeller.)
 4. Aynı sayfada en az şifre uzunluğunu 10 yapın.
-5. **Authentication → Users → Add user** ile kullanıcıları ekleyin (**Auto Confirm User** işaretli).
-   Kullanıcılar şifrelerini siteden "Şifre Değiştir" ile değiştirebilir.
-6. **Project Settings → API** sayfasından proje adresini ve `anon` / `publishable` anahtarını not edin.
+5. **Authentication → Users → Add user** ile ilk kullanıcıyı ekleyin (**Auto Confirm User** işaretli)
+   ve `schema.sql` dosyasının sonundaki "İlk yönetici" satırını o e-postayla çalıştırın.
+6. **Edge Functions → Deploy a new function → Via Editor**: adını `users` yapın, içeriğine
+   [`supabase/functions/users/index.ts`](supabase/functions/users/index.ts) dosyasını yapıştırıp yayınlayın.
+   Sonraki kullanıcılar sitedeki **Kullanıcılar** sayfasından eklenir, silinir ve yönetici yapılır.
+7. **Project Settings → API** sayfasından proje adresini ve `anon` / `publishable` anahtarını not edin.
 
 > `service_role` / `secret` anahtarı hiçbir zaman siteye, depoya veya `.env` dosyasına konmamalıdır.
+> Kullanıcı yönetimi işlevi bu anahtarı Supabase'in kendi ortamından alır; elle girmeniz gerekmez.
 
 ### 2. Bilgisayarda çalıştırma
 
@@ -59,6 +64,9 @@ Betikler yalnızca ekleme yapar, mevcut kayıtları silmez veya değiştirmez.
 - Değişiklik geçmişi yalnızca veritabanı tetikleyicisi tarafından yazılır; kullanıcılar
   geçmişi değiştiremez veya silemez.
 - Tüm alanlar veritabanında da doğrulanır (biçim, uzunluk, izin verilen değerler).
+- Kullanıcı işlemleri sunucudaki `users` işlevinde yapılır; çağıranın yönetici olduğu her
+  istekte veritabanından denetlenir. Yönetici kendi hesabını silemez, kendi yetkisini kaldıramaz.
+- Silinen bir hesabın açık oturumu, veritabanı kuralları sayesinde anında geçersiz olur.
 - Yayın derlemesi sıkı bir Content-Security-Policy içerir: yalnızca sitenin kendi
   betikleri çalışır, veri yalnızca Supabase projenize gider.
 - Site başka bir sayfanın içine gömülü (iframe) açıldığında çalışmaz.

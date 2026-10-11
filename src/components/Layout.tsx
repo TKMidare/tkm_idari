@@ -1,11 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, Outlet } from 'react-router'
-import { signOut, useAuth } from '../auth'
+import { signOut, useAuth, useIsAdmin } from '../auth'
 import { entities } from '../lib/fields'
 import { supabase } from '../lib/supabase'
+import { MIN_PASSWORD_LENGTH } from '../lib/users'
 import { Modal } from './Modal'
-
-const MIN_PASSWORD_LENGTH = 10
 
 const links = [
   { to: '/', label: 'Özet' },
@@ -80,6 +79,7 @@ function PasswordDialog({ onClose }: { onClose: () => void }) {
 
 export function Layout() {
   const { session } = useAuth()
+  const isAdmin = useIsAdmin()
   const [changingPassword, setChangingPassword] = useState(false)
   // Dar ekranlarda kenar menüsü kapalı durur, üst çubuktaki düğmeyle açılır.
   const [menuOpen, setMenuOpen] = useState(false)
@@ -116,6 +116,7 @@ export function Layout() {
               {link.label}
             </NavLink>
           ))}
+          {isAdmin && <NavLink to="/kullanicilar">Kullanıcılar</NavLink>}
         </nav>
         <div className="account">
           <span className="account-email" title={session?.user.email}>
