@@ -65,6 +65,7 @@ create table public.generators (
   brand text check (char_length(brand) <= 50),
   fuel_kind text check (char_length(fuel_kind) <= 50),
   fuel_limit numeric(10, 2) check (fuel_limit between 0 and 9999999),
+  store_code text check (char_length(store_code) <= 20),
   store text check (char_length(store) <= 80),
   province text check (char_length(province) <= 40),
   district text check (char_length(district) <= 40),

@@ -148,7 +148,7 @@ export const generators: Entity = {
   title: 'Jeneratörler',
   singular: 'Jeneratör',
   keyField: 'serial_no',
-  searchColumns: ['brand', 'fuel_kind', 'store', 'province', 'district'],
+  searchColumns: ['brand', 'fuel_kind', 'store_code', 'store', 'province', 'district'],
   compactSearchColumns: ['serial_no'],
   fields: [
     {
@@ -159,6 +159,7 @@ export const generators: Entity = {
     { key: 'brand', label: 'Marka', type: 'text', maxLength: 50, summary: true },
     { key: 'fuel_kind', label: 'Mazot Cinsi', type: 'text', maxLength: 50 },
     { key: 'fuel_limit', label: 'Limit', type: 'decimal', min: 0, max: 9_999_999, format: 'grouped' },
+    { key: 'store_code', label: 'Mağaza Kodu', type: 'text', maxLength: 20, summary: true },
     { key: 'store', label: 'Mağaza', type: 'text', maxLength: 80, summary: true },
     { key: 'province', label: 'İl', type: 'text', maxLength: 40, summary: true },
     { key: 'district', label: 'İlçe', type: 'text', maxLength: 40, summary: true },
