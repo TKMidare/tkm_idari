@@ -12,7 +12,10 @@ type Dialog = { kind: 'form'; row: Row | null } | { kind: 'delete'; row: Row } |
 
 function cellClass(field: Field, row: Row): string | undefined {
   const value = row[field.key]
-  if (!field.expiry || !value || row.status === PASSIVE) return undefined
+  if (field.key === 'status') return 'cell-status'
+  if (value === null || value === '') return 'cell-empty'
+  if (field.summary) return 'cell-summary'
+  if (!field.expiry || row.status === PASSIVE) return undefined
   const days = daysUntil(String(value))
   return days < 0 ? 'cell-expired' : days <= EXPIRY_WARNING_DAYS ? 'cell-expiring' : undefined
 }
@@ -142,7 +145,7 @@ export function RecordsPage({ entity }: { entity: Entity }) {
 
       <div className="table-card">
         <div className="table-scroll" aria-busy={loading}>
-          <table>
+          <table className="cards cards-compact">
             <thead>
               <tr>
                 {columns.map((field) => (
@@ -166,7 +169,7 @@ export function RecordsPage({ entity }: { entity: Entity }) {
               {data?.rows.map((row) => (
                 <tr key={row.id}>
                   {columns.map((field) => (
-                    <td key={field.key} className={cellClass(field, row)}>
+                    <td key={field.key} className={cellClass(field, row)} data-label={field.label}>
                       {field.key === 'status' ? (
                         <span className={row.status === PASSIVE ? 'badge' : row.status === 'Aktif' ? 'badge badge-ok' : 'badge badge-pool'}>
                           {row.status}

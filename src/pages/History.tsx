@@ -94,7 +94,7 @@ export function History() {
 
       <div className="table-card">
         <div className="table-scroll">
-          <table>
+          <table className="cards">
             <thead>
               <tr>
                 <th>Tarih</th>
@@ -111,15 +111,15 @@ export function History() {
                 return (
                   <tr key={entry.id}>
                     <td>{formatDateTime(entry.created_at)}</td>
-                    <td>{entry.user_email ?? '—'}</td>
-                    <td>
+                    <td data-label="Kullanıcı">{entry.user_email ?? '—'}</td>
+                    <td data-label="Kayıt">
                       {entity && record ? formatValue(entity.fields[0], record[entity.keyField]) : '—'}
                       <span className="muted"> · {entity?.singular ?? entry.table_name}</span>
                     </td>
-                    <td>
+                    <td className="cell-status">
                       <span className={ACTIONS[entry.action].badge}>{ACTIONS[entry.action].label}</span>
                     </td>
-                    <td>
+                    <td className={entry.action === 'UPDATE' ? undefined : 'cell-empty'} data-label="Değişiklikler">
                       <Changes entry={entry} />
                     </td>
                   </tr>

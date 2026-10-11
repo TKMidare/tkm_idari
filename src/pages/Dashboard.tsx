@@ -132,7 +132,7 @@ export function Dashboard() {
                 <p className="empty">Önümüzdeki {EXPIRY_WARNING_DAYS} gün içinde süresi dolan kayıt yok.</p>
               ) : (
                 <div className="table-scroll">
-                  <table>
+                  <table className="cards cards-compact">
                     <thead>
                       <tr>
                         <th>{entity.fields[0].label}</th>
@@ -147,9 +147,9 @@ export function Dashboard() {
                           <td>
                             <Link to={`${entity.path}?q=${encodeURIComponent(alert.search)}`}>{alert.name}</Link>
                           </td>
-                          <td>{alert.what}</td>
-                          <td>{formatDate(alert.date)}</td>
-                          <td>
+                          <td className="cell-summary">{alert.what}</td>
+                          <td className="cell-summary">{formatDate(alert.date)}</td>
+                          <td className="cell-status">
                             <DueBadge date={alert.date} />
                           </td>
                         </tr>

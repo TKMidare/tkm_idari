@@ -24,6 +24,8 @@ export interface Field {
   expiry?: boolean
   /** Listede gösterilmez, yalnızca formda ve Excel'de yer alır. */
   hidden?: boolean
+  /** Telefon görünümündeki özet kartta gösterilir; diğer alanlar kayıt açılınca görünür. */
+  summary?: boolean
 }
 
 export interface Entity {
@@ -59,8 +61,8 @@ function normalizePhone(text: string): string {
 const status: Field = { key: 'status', label: 'Durum', type: 'select', options: ['Aktif', PASSIVE], required: true, defaultValue: 'Aktif' }
 const notes: Field = { key: 'notes', label: 'Not', type: 'textarea', maxLength: 1000 }
 const assignment: Field[] = [
-  { key: 'assigned_to', label: 'Kullanan Personel', type: 'text', maxLength: 80 },
-  { key: 'department', label: 'Birim', type: 'text', maxLength: 80 },
+  { key: 'assigned_to', label: 'Kullanan Personel', type: 'text', maxLength: 80, summary: true },
+  { key: 'department', label: 'Birim', type: 'text', maxLength: 80, summary: true },
   { key: 'job_title', label: 'Görev', type: 'text', maxLength: 80 },
 ]
 const imeiRule = { normalize: digitsOnly, pattern: /^\d{15}$/, hint: 'IMEI 15 haneli olmalıdır.' }
@@ -79,8 +81,8 @@ export const vehicles: Entity = {
       normalize: normalizePlate, pattern: /^[0-9A-Z ]{4,12}$/,
       hint: 'Plaka 4–12 karakter olmalı; yalnızca İngilizce harf ve rakam içerebilir.',
     },
-    { key: 'brand', label: 'Marka', type: 'text', maxLength: 50 },
-    { key: 'model', label: 'Model', type: 'text', maxLength: 50 },
+    { key: 'brand', label: 'Marka', type: 'text', maxLength: 50, summary: true },
+    { key: 'model', label: 'Model', type: 'text', maxLength: 50, summary: true },
     { key: 'year', label: 'Yıl', type: 'int', min: 1950, max: 2100 },
     { key: 'color', label: 'Renk', type: 'text', maxLength: 30 },
     { key: 'mileage', label: 'Kilometre', type: 'int', min: 0, max: 9_999_999, format: 'grouped' },
@@ -115,14 +117,14 @@ export const phoneLines: Entity = {
       normalize: normalizePhone, pattern: /^0\d{10}$/,
       hint: 'Telefon numarası alan koduyla birlikte 10 haneli olmalıdır (örn. 0532 123 45 67).',
     },
-    { key: 'number_type', label: 'Numara Türü', type: 'select', options: ['Şirket', 'Şahsi'] },
-    { key: 'operator', label: 'Operatör', type: 'select', options: ['Turkcell', 'Vodafone', 'Türk Telekom', 'Diğer'] },
+    { key: 'number_type', label: 'Numara Türü', type: 'select', options: ['Şirket', 'Şahsi'], summary: true },
+    { key: 'operator', label: 'Operatör', type: 'select', options: ['Turkcell', 'Vodafone', 'Türk Telekom', 'Diğer'], summary: true },
     { key: 'plan', label: 'Tarife / Paket', type: 'text', maxLength: 80 },
     { key: 'quota', label: 'Kota', type: 'text', maxLength: 60, hidden: true },
     { key: 'monthly_fee', label: 'Aylık Ücret', type: 'decimal', min: 0, max: 999_999, format: 'money' },
     status,
     ...assignment,
-    { key: 'device_type', label: 'Cihaz Türü', type: 'select', options: ['Telefon', 'Tablet'] },
+    { key: 'device_type', label: 'Cihaz Türü', type: 'select', options: ['Telefon', 'Tablet'], summary: true },
     { key: 'imei1', label: 'IMEI 1', type: 'text', ...imeiRule },
     { key: 'imei2', label: 'IMEI 2', type: 'text', hidden: true, ...imeiRule },
     { key: 'device_brand', label: 'Cihaz Marka', type: 'text', maxLength: 50 },
@@ -154,12 +156,12 @@ export const generators: Entity = {
       normalize: compactUpper, pattern: /^[A-Z0-9./-]{2,40}$/,
       hint: 'Seri numarası 2–40 karakter olmalı; yalnızca İngilizce harf, rakam ve . / - içerebilir.',
     },
-    { key: 'brand', label: 'Marka', type: 'text', maxLength: 50 },
+    { key: 'brand', label: 'Marka', type: 'text', maxLength: 50, summary: true },
     { key: 'fuel_kind', label: 'Mazot Cinsi', type: 'text', maxLength: 50 },
     { key: 'fuel_limit', label: 'Limit', type: 'decimal', min: 0, max: 9_999_999, format: 'grouped' },
-    { key: 'store', label: 'Mağaza', type: 'text', maxLength: 80 },
-    { key: 'province', label: 'İl', type: 'text', maxLength: 40 },
-    { key: 'district', label: 'İlçe', type: 'text', maxLength: 40 },
+    { key: 'store', label: 'Mağaza', type: 'text', maxLength: 80, summary: true },
+    { key: 'province', label: 'İl', type: 'text', maxLength: 40, summary: true },
+    { key: 'district', label: 'İlçe', type: 'text', maxLength: 40, summary: true },
     status,
     notes,
   ],

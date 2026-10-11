@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { signOut, useAuth } from '../auth'
 import { entities } from '../lib/fields'
@@ -81,15 +81,36 @@ function PasswordDialog({ onClose }: { onClose: () => void }) {
 export function Layout() {
   const { session } = useAuth()
   const [changingPassword, setChangingPassword] = useState(false)
+  // Dar ekranlarda kenar menüsü kapalı durur, üst çubuktaki düğmeyle açılır.
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && setMenuOpen(false)
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [menuOpen])
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <header className="topbar">
+        <button type="button" className="menu-button" aria-label="Menüyü aç" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+        <span>TKM İdari İşler</span>
+      </header>
+      {menuOpen && <div className="backdrop" onClick={() => setMenuOpen(false)} />}
+      <aside className={menuOpen ? 'sidebar open' : 'sidebar'}>
         <div className="brand">
           <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="28" height="28" />
           <span>TKM İdari İşler</span>
+          <button type="button" className="menu-button menu-close" aria-label="Menüyü kapat" onClick={() => setMenuOpen(false)}>
+            ×
+          </button>
         </div>
-        <nav>
+        <nav onClick={() => setMenuOpen(false)}>
           {links.map((link) => (
             <NavLink key={link.to} to={link.to} end={link.to === '/'}>
               {link.label}
@@ -100,7 +121,13 @@ export function Layout() {
           <span className="account-email" title={session?.user.email}>
             {session?.user.email}
           </span>
-          <button type="button" onClick={() => setChangingPassword(true)}>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              setChangingPassword(true)
+            }}
+          >
             Şifre Değiştir
           </button>
           <button type="button" onClick={() => void signOut()}>
